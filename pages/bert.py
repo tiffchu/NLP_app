@@ -84,13 +84,21 @@ Upload a CSV file, select a text column for NLP preprocessing,
 and perform topic modeling to visualize the topics using BERTopic.
 """)
 
-# Upload CSV
-uploaded_file = st.file_uploader("Upload a CSV file", type="csv")
+if 'uploaded_file' in st.session_state:
+    uploaded_file = st.session_state['uploaded_file']
+    #st.write("File from Main Page:")
+    #st.write(uploaded_file.head())  # Display the DataFrame head
+else:
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
-if uploaded_file:
-    # Read CSV
-    df = pd.read_csv(uploaded_file)
-    st.write("Data Preview:")
+if uploaded_file is not None:
+    if isinstance(uploaded_file, pd.DataFrame):
+        df = uploaded_file
+    else:
+        df = pd.read_csv(uploaded_file)
+        st.session_state['uploaded_file'] = df  # Save the DataFrame to session state
+
+    st.write("Uploaded CSV file:")
     st.write(df.head())
 
     # Select text column

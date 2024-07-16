@@ -12,13 +12,22 @@ def count_words(text):
 
 st.title("EDA Dashboard")
 
-uploaded_file = st.file_uploader("Upload your CSV file", type=["csv"])
+if 'uploaded_file' in st.session_state:
+    uploaded_file = st.session_state['uploaded_file']
+    #st.write("File from Main Page:")
+    #st.write(uploaded_file.head())  # Display the DataFrame head
+else:
+    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file)
+    if isinstance(uploaded_file, pd.DataFrame):
+        df = uploaded_file
+    else:
+        df = pd.read_csv(uploaded_file)
+        st.session_state['uploaded_file'] = df  # Save the DataFrame to session state
 
-    st.write("Dataframe:")
-    st.write(df)
+    st.write("Uploaded CSV file:")
+    st.write(df.head())
 
     columns = df.columns.tolist()
     selected_columns = st.multiselect("Select numerical or categorical columns for analysis", columns)
