@@ -10,7 +10,7 @@ def count_words(text):
         return len(text.split())
     return 0
 
-st.title("EDA Dashboard")
+st.title("EDA (Exploratory Data Analysis)")
 
 if 'uploaded_file' in st.session_state:
     uploaded_file = st.session_state['uploaded_file']
@@ -28,6 +28,28 @@ if uploaded_file is not None:
 
     st.write("Uploaded CSV file:")
     st.write(df.head())
+    
+    columns = df.columns.tolist()
+
+    selected_column = st.selectbox("Select column for filtering", columns)
+
+    if selected_column:
+        categories = df[selected_column].unique()
+        selected_category = st.selectbox(f"Select category in '{selected_column}' to filter by", categories)
+
+        if selected_category:
+            st.write(f"Filtered Data for '{selected_category}' in '{selected_column}'")
+            filtered_df = df[df[selected_column] == selected_category]
+            st.write(filtered_df)
+
+        show_only_column = st.checkbox(f"Show single column (optional)")
+
+        if show_only_column:
+                selected_column1 = st.selectbox("Show specific column only)", columns)
+                st.write(filtered_df[selected_column1])
+
+
+            
 
     columns = df.columns.tolist()
     selected_columns = st.multiselect("Select numerical or categorical columns for analysis", columns)
