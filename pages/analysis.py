@@ -31,11 +31,11 @@ if uploaded_file is not None:
     
     columns = df.columns.tolist()
 
-    selected_column = st.selectbox("Select column for filtering", columns)
+    selected_column = st.selectbox("Select column for filtering - only works for categorical columns", columns)
 
     if selected_column:
         categories = df[selected_column].unique()
-        selected_category = st.selectbox(f"Select category in '{selected_column}' to filter by", categories)
+        selected_category = st.selectbox(f"Select specific category in '{selected_column}' to filter by", categories)
 
         if selected_category:
             st.write(f"Filtered Data for '{selected_category}' in '{selected_column}'")
@@ -48,8 +48,30 @@ if uploaded_file is not None:
                 selected_column1 = st.selectbox("Show specific column only)", columns)
                 st.write(filtered_df[selected_column1])
 
+                filter_text = st.checkbox(f"Filter text column (optional)")
 
-            
+                if filter_text:
+                    text_columns = [col for col in columns if df[col].dtype == 'object']
+                    selected_text_column = st.selectbox("Select RESPONSE(text) column for filtering", text_columns)
+
+                    if selected_text_column:
+                        filter_option = st.radio(
+                            "Filter text based on word count",
+                            ("Show all", "More than 20 words", "More than 50 words")
+                        )
+
+                        # if filter_option == "More than 20 words":
+                        #     filtered_df = filtered_df[filtered_df[selected_text_column].apply(count_words) > 20]
+                        # elif filter_option == "More than 50 words":
+                        #     filtered_df = filtered_df[filtered_df[selected_text_column].apply(count_words) > 50]
+                        if filter_option == "Show all":
+                            st.write(filtered_df[filtered_df[selected_text_column].apply(count_words) > 0])
+                        elif filter_option == "More than 20 words":
+                            st.write(filtered_df[filtered_df[selected_text_column].apply(count_words) > 20])
+                        elif filter_option == "More than 50 words":
+                            st.write(filtered_df[filtered_df[selected_text_column].apply(count_words) > 50])
+    st.write("")
+    st.write("")    
 
     columns = df.columns.tolist()
     selected_columns = st.multiselect("Select numerical or categorical columns for analysis", columns)
