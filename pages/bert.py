@@ -23,6 +23,7 @@ from bertopic.vectorizers import ClassTfidfTransformer
 nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
+# New things
 
 # Function to preprocess text
 def preprocess_text(text):
