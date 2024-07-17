@@ -5,7 +5,7 @@ from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
 import matplotlib.pyplot as plt
-from wordcloud import WordCloud
+# from wordcloud import WordCloud
 from bertopic import BERTopic
 from gensim.models.coherencemodel import CoherenceModel
 from gensim.corpora.dictionary import Dictionary
@@ -25,6 +25,12 @@ nltk.download('stopwords')
 nltk.download('wordnet')
 # New things
 
+def update_dataset(*, data):
+    st.session_state.data = data
+
+def update_text_column(column):
+    st.session_state.text_column = column
+
 # Function to preprocess text
 def preprocess_text(text):
     if isinstance(text, str):  # Check if the input is a string
@@ -37,13 +43,13 @@ def preprocess_text(text):
         return []  # Return an empty list if the input is not a string
 
 # Function to create word cloud
-def create_wordcloud(text, title):
-    wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(text))
-    plt.figure(figsize=(10, 5))
-    plt.imshow(wordcloud, interpolation='bilinear')
-    plt.axis('off')
-    plt.title(title)
-    st.pyplot(plt)
+# def create_wordcloud(text, title):
+#     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(text))
+#     plt.figure(figsize=(10, 5))
+#     plt.imshow(wordcloud, interpolation='bilinear')
+#     plt.axis('off')
+#     plt.title(title)
+#     st.pyplot(plt)
 
 @st.cache_data
 def get_BERTopic_model():
@@ -86,124 +92,104 @@ Upload a CSV file, select a text column for NLP preprocessing,
 and perform topic modeling to visualize the topics using BERTopic.
 """)
 
-if 'uploaded_file' in st.session_state:
-    uploaded_file = st.session_state['uploaded_file']
-    #st.write("File from Main Page:")
-    #st.write(uploaded_file.head())  # Display the DataFrame head
-else:
-    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+raw_data = st.file_uploader("Choose a CSV file", type="csv")
+if raw_data:
+    st.button("Update Dataset", on_click=update_dataset, kwargs={'data': raw_data})
 
-if uploaded_file is not None:
-    if isinstance(uploaded_file, pd.DataFrame):
-        df = uploaded_file
-    else:
-        df = pd.read_csv(uploaded_file)
-        st.session_state['uploaded_file'] = df  # Save the DataFrame to session state
+  
+if 'data' in st.session_state:
+    if not isinstance(st.session_state.data, pd.DataFrame):
+        st.session_state = pd.read_csv(st.session_state.data)
 
     st.write("Uploaded CSV file:")
-    st.write(df.head())
+    st.write(st.session_state.data.head())
 
-    # Select text column
-    text_column = st.selectbox("Select the column for topic modeling", df.columns)
+#     text_column = st.selectbox("Select the column for topic modeling", df.columns)
+#     if text_column:
+#         st.button("Select column to analyse", key="text_column_button", on_click=update_text_column(text_column))
+#         print(st.session_state.text_column)
 
-    # Preprocess text
-    # df['processed_text'] = df[text_column].apply(preprocess_text)
-
-    # # Show preprocessed text
-    # st.write("Preprocessed Text:")
-    # st.write(df[['processed_text']].head())
-
-    # Filter out rows with empty or NaN processed_text
-    # df = df.dropna(subset=['processed_text'])
-
-    # Prepare text for BERTopic
-    documents = df[text_column].astype(str)
-
-    # Create BERTopic model
+#     # Select text column
+# if st.session_state.text_column is not None:
     
-    # fileName = st.text_input('File Name')
-    # st.download_button('Save Topic Model', topic_model, )
+#     documents = df[text_column].astype(str)
 
-    # Show topics
-    #st.write("BERTopic Topics:")
-    #st.write(topic_model.get_topics())
+#     # Visualize topics
+#     st.write("Topic Visualization:")
+#     if 'topic_model' not in st.session_state:
+#         st.session_state['topic_model'] = get_BERTopic_model()
+#         st.session_state['topic_model'].fit_transform(documents)
+#     topic_model = st.session_state['topic_model']
+#     st.plotly_chart(topic_model.visualize_topics(), use_container_width=True)
 
-    # Visualize topics
-    st.write("Topic Visualization:")
-    if 'topic_model' not in st.session_state:
-        st.session_state['topic_model'] = get_BERTopic_model()
-        st.session_state['topic_model'].fit_transform(documents)
-    topic_model = st.session_state['topic_model']
-    st.plotly_chart(topic_model.visualize_topics(), use_container_width=True)
+#     # Search for topics
+#     search_word = st.text_input("Enter a word to find related topics:")
+#     if search_word:
+#         search_topics, search_probabilities = topic_model.find_topics(search_word)
+#         print(search_word)
+#         doc_info = topic_model.get_document_info(documents)
+#         topic_words = [doc_info[doc_info['Topic'] == i]['Name'].iloc[0].split('_')[1:] for i in search_topics]
+#         search_results = pd.DataFrame({
+#             'Topic': search_topics,
+#             'Topic Words': topic_words,
+#             'Probability': search_probabilities
+#         }).sort_values(by='Probability', ascending=False)
+#         search_results = search_results[search_results['Topic'] >= 0]
+#         st.write(f"Topics related to '{search_word}':")
+#         st.write(search_results)
+#         # st.write(doc_info)
 
-    # Search for topics
-    search_word = st.text_input("Enter a word to find related topics:")
-    if search_word:
-        search_topics, search_probabilities = topic_model.find_topics(search_word)
-        print(search_word)
-        doc_info = topic_model.get_document_info(documents)
-        topic_words = [doc_info[doc_info['Topic'] == i]['Name'].iloc[0].split('_')[1:] for i in search_topics]
-        search_results = pd.DataFrame({
-            'Topic': search_topics,
-            'Topic Words': topic_words,
-            'Probability': search_probabilities
-        }).sort_values(by='Probability', ascending=False)
-        search_results = search_results[search_results['Topic'] >= 0]
-        st.write(f"Topics related to '{search_word}':")
-        st.write(search_results)
-        # st.write(doc_info)
+#     # # Calculate coherence score
+#     # dictionary = Dictionary(df['processed_text'])
+#     # corpus = [dictionary.doc2bow(text) for text in df['processed_text']]
+#     # coherence_model = CoherenceModel(topics=[topic_model.get_topic(i) for i in range(num_topics)], texts=df['processed_text'], dictionary=dictionary, coherence='c_v')
+#     # coherence_score = coherence_model.get_coherence()
+#     # st.write(f"Coherence Score: {coherence_score}")
 
-    # # Calculate coherence score
-    # dictionary = Dictionary(df['processed_text'])
-    # corpus = [dictionary.doc2bow(text) for text in df['processed_text']]
-    # coherence_model = CoherenceModel(topics=[topic_model.get_topic(i) for i in range(num_topics)], texts=df['processed_text'], dictionary=dictionary, coherence='c_v')
-    # coherence_score = coherence_model.get_coherence()
-    # st.write(f"Coherence Score: {coherence_score}")
-
-    # Perplexity score calculation using sklearn's CountVectorizer
-    vectorizer = CountVectorizer()
-    transformed_documents = vectorizer.fit_transform(documents)
+#     # Perplexity score calculation using sklearn's CountVectorizer
+#     vectorizer = CountVectorizer()
+#     transformed_documents = vectorizer.fit_transform(documents)
 
 
 
-    # # Visualize topics with word clouds
-    # for topic_id in range(topic_model.get_number_of_topics()):
-    #     st.write(f"Topic {topic_id + 1}")
-    #     words = topic_model.get_topic(topic_id)[:10]  # Get top 10 words per topic
-    #     create_wordcloud([word for word, _ in words], f"Topic {topic_id + 1}")
+#     # # Visualize topics with word clouds
+#     # for topic_id in range(topic_model.get_number_of_topics()):
+#     #     st.write(f"Topic {topic_id + 1}")
+#     #     words = topic_model.get_topic(topic_id)[:10]  # Get top 10 words per topic
+#     #     create_wordcloud([word for word, _ in words], f"Topic {topic_id + 1}")
 
-    # num_topics = len(set(topics))  # Determine the number of unique topics
-    # for topic_id in range(num_topics):
-    #     st.write(f"Topic {topic_id + 1}")
-    #     words = topic_model.get_topic(topic_id)[:10]  # Get top 10 words per topic
-    #     create_wordcloud([word for word, _ in words], f"Topic {topic_id + 1}")
+#     # num_topics = len(set(topics))  # Determine the number of unique topics
+#     # for topic_id in range(num_topics):
+#     #     st.write(f"Topic {topic_id + 1}")
+#     #     words = topic_model.get_topic(topic_id)[:10]  # Get top 10 words per topic
+#     #     create_wordcloud([word for word, _ in words], f"Topic {topic_id + 1}")
 
 
-    # Calculate coherence score
-    # dictionary = Dictionary(df['processed_text'])
-    # corpus = [dictionary.doc2bow(text) for text in df['processed_text']]
-    # coherence_model = CoherenceModel(topics=topic_model.get_topics(), texts=df['processed_text'], dictionary=dictionary, coherence='c_v')
-    # coherence_score = coherence_model.get_coherence()
+#     # Calculate coherence score
+#     # dictionary = Dictionary(df['processed_text'])
+#     # corpus = [dictionary.doc2bow(text) for text in df['processed_text']]
+#     # coherence_model = CoherenceModel(topics=topic_model.get_topics(), texts=df['processed_text'], dictionary=dictionary, coherence='c_v')
+#     # coherence_score = coherence_model.get_coherence()
 
-    # st.write(f"Coherence Score: {coherence_score}")
+#     # st.write(f"Coherence Score: {coherence_score}")
 
-    # Perplexity score calculation using sklearn's CountVectorizer
-    # vectorizer = CountVectorizer()
-    # transformed_documents = vectorizer.fit_transform(documents)
-    # perplexity_score = topic_model.perplexity(transformed_documents)
+#     # Perplexity score calculation using sklearn's CountVectorizer
+#     # vectorizer = CountVectorizer()
+#     # transformed_documents = vectorizer.fit_transform(documents)
+#     # perplexity_score = topic_model.perplexity(transformed_documents)
 
-    # st.write(f"Perplexity Score: {perplexity_score}")
+#     # st.write(f"Perplexity Score: {perplexity_score}")
 
-    # Search for topics
-    search_word = st.text_input("Enter a word to find related topics:")
-    if search_word:
-        search_topics, search_probabilities = topic_model.find_topics(search_word)
-        search_results = pd.DataFrame({
-            'Topic': search_topics,
-            'Probability': search_probabilities
-        }).sort_values(by='Probability', ascending=False)
-        st.write(f"Topics related to '{search_word}':")
-        st.write(search_results)
+#     # Search for topics
+#     search_word = st.text_input("Enter a word to find related topics:")
+#     if search_word:
+#         search_topics, search_probabilities = topic_model.find_topics(search_word)
+#         search_results = pd.DataFrame({
+#             'Topic': search_topics,
+#             'Probability': search_probabilities
+#         }).sort_values(by='Probability', ascending=False)
+#         st.write(f"Topics related to '{search_word}':")
+#         st.write(search_results)
 
 
 
