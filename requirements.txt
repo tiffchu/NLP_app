@@ -7,7 +7,7 @@ matplotlib
 pandas
 streamlit
 transformers
-sklearn
+scikit-learn
 pandas
 bertopic 
 wordcloud
