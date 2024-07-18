@@ -28,8 +28,15 @@ nltk.download('wordnet')
 def update_dataset(*, data):
     st.session_state.data = data
 
-def update_text_column(column):
+def select_text_column(*, column):
     st.session_state.text_column = column
+    documents = st.session_state.data[st.session_state.text_column].astype(str)
+
+    # Visualize topics
+    st.write("Topic Visualization:")
+
+    st.session_state['topic_model'] = get_BERTopic_model()
+    st.session_state['topic_model'].fit_transform(documents)
 
 # Function to preprocess text
 def preprocess_text(text):
@@ -94,33 +101,24 @@ and perform topic modeling to visualize the topics using BERTopic.
 
 raw_data = st.file_uploader("Choose a CSV file", type="csv")
 if raw_data:
-    st.button("Update Dataset", on_click=update_dataset, kwargs={'data': raw_data})
-
+    update_button = st.button("Update Dataset", key='update_dataset_button', on_click=update_dataset, kwargs={'data': raw_data})
   
 if 'data' in st.session_state:
     if not isinstance(st.session_state.data, pd.DataFrame):
-        st.session_state = pd.read_csv(st.session_state.data)
+        st.session_state.data = pd.read_csv(st.session_state.data)
 
     st.write("Uploaded CSV file:")
-    st.write(st.session_state.data.head())
+    st.write(st.session_state.data)
 
-#     text_column = st.selectbox("Select the column for topic modeling", df.columns)
-#     if text_column:
-#         st.button("Select column to analyse", key="text_column_button", on_click=update_text_column(text_column))
-#         print(st.session_state.text_column)
+    text_column = st.selectbox("Select the column for topic modeling", st.session_state.data.columns)
+    if text_column:
+        print(text_column)
+        st.button("Select column to analyse", key="text_column_button", on_click=select_text_column, kwargs={'column': text_column})
 
-#     # Select text column
-# if st.session_state.text_column is not None:
-    
-#     documents = df[text_column].astype(str)
-
-#     # Visualize topics
-#     st.write("Topic Visualization:")
-#     if 'topic_model' not in st.session_state:
-#         st.session_state['topic_model'] = get_BERTopic_model()
-#         st.session_state['topic_model'].fit_transform(documents)
-#     topic_model = st.session_state['topic_model']
-#     st.plotly_chart(topic_model.visualize_topics(), use_container_width=True)
+if 'topic_model' in st.session_state:
+        
+    topic_model = st.session_state['topic_model']
+    st.plotly_chart(topic_model.visualize_topics(), use_container_width=True)
 
 #     # Search for topics
 #     search_word = st.text_input("Enter a word to find related topics:")
