@@ -44,12 +44,13 @@ def create_wordcloud(text, title):
     plt.title(title)
     st.pyplot(plt)
 
+@st.cache_data
 def get_BERTopic_model():
     # Step 1 - Extract embeddings
     embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
     # Step 2 - Reduce dimensionality
-    umap_model = UMAP(n_neighbors=15, n_components=5, min_dist=0.0, metric='cosine')
+    umap_model = UMAP(n_neighbors=15, n_components=5, min_dist=0.0, metric='cosine', random_state=69)
 
 
     # Step 3 - Cluster reduced embeddings
@@ -118,8 +119,7 @@ if uploaded_file is not None:
     documents = df[text_column].astype(str)
 
     # Create BERTopic model
-    topic_model = get_BERTopic_model()
-    topics, probabilities = topic_model.fit_transform(documents)
+    
     # fileName = st.text_input('File Name')
     # st.download_button('Save Topic Model', topic_model, )
 
@@ -129,9 +129,13 @@ if uploaded_file is not None:
 
     # Visualize topics
     st.write("Topic Visualization:")
+    if 'topic_model' not in st.session_state:
+        st.session_state['topic_model'] = get_BERTopic_model()
+        st.session_state['topic_model'].fit_transform(documents)
+    topic_model = st.session_state['topic_model']
     st.plotly_chart(topic_model.visualize_topics(), use_container_width=True)
 
- # Search for topics
+    # Search for topics
     search_word = st.text_input("Enter a word to find related topics:")
     if search_word:
         search_topics, search_probabilities = topic_model.find_topics(search_word)

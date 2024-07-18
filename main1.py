@@ -8,8 +8,8 @@ st.set_page_config(
     
 )
 
-st.title("This is the Home Page.")
-st.write("Welcome to the Natural Language Processing App!")
+#st.title("This is the Home Page.")
+st.title("Welcome to the Natural Language Processing App!")
 st.write("Use the sidebar to navigate to different sections of the app.")
 
 
@@ -23,3 +23,5 @@ if uploaded_file is not None:
     st.write("File uploaded successfully! You can now navigate to the NLP tools on the sidebar to work with this file.")
     st.write("Uploaded CSV file:")
     st.write(df.head())
+
+st.write('Find out more about each tool:')
