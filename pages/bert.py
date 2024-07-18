@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import nltk
+import numpy as np
 from nltk.corpus import stopwords
 from nltk.tokenize import word_tokenize
 from nltk.stem import WordNetLemmatizer
@@ -33,10 +34,14 @@ def select_text_column(*, column):
     documents = st.session_state.data[st.session_state.text_column].astype(str)
 
     # Visualize topics
-    st.write("Topic Visualization:")
 
-    st.session_state['topic_model'] = get_BERTopic_model()
-    st.session_state['topic_model'].fit_transform(documents)
+    st.session_state.topic_model = get_BERTopic_model()
+    st.session_state.topic_model.fit_transform(documents)
+    st.session_state.topic_visualization = st.session_state.topic_model.visualize_topics()
+    
+
+def update_search_word(*, word):
+    st.session_state.search_word = word
 
 # Function to preprocess text
 def preprocess_text(text):
@@ -112,30 +117,32 @@ if 'data' in st.session_state:
 
     text_column = st.selectbox("Select the column for topic modeling", st.session_state.data.columns)
     if text_column:
-        print(text_column)
         st.button("Select column to analyse", key="text_column_button", on_click=select_text_column, kwargs={'column': text_column})
 
 if 'topic_model' in st.session_state:
-        
-    topic_model = st.session_state['topic_model']
-    st.plotly_chart(topic_model.visualize_topics(), use_container_width=True)
+    freq = st.session_state.topic_model.get_topic_info()
+    st.write(freq.head(5))
+    st.write("Topic Visualization:")
+    st.plotly_chart(st.session_state.topic_visualization)
 
-#     # Search for topics
-#     search_word = st.text_input("Enter a word to find related topics:")
-#     if search_word:
-#         search_topics, search_probabilities = topic_model.find_topics(search_word)
-#         print(search_word)
-#         doc_info = topic_model.get_document_info(documents)
-#         topic_words = [doc_info[doc_info['Topic'] == i]['Name'].iloc[0].split('_')[1:] for i in search_topics]
-#         search_results = pd.DataFrame({
-#             'Topic': search_topics,
-#             'Topic Words': topic_words,
-#             'Probability': search_probabilities
-#         }).sort_values(by='Probability', ascending=False)
-#         search_results = search_results[search_results['Topic'] >= 0]
-#         st.write(f"Topics related to '{search_word}':")
-#         st.write(search_results)
-#         # st.write(doc_info)
+    # Search for topics
+    search_word = st.text_input("Enter a word to find related topics:")
+    if search_word:
+        st.button("Find Topics", on_click=update_search_word, kwargs={'word': search_word})
+
+if 'search_word' in st.session_state:
+    search_topics, search_probabilities = st.session_state.topic_model.find_topics(search_word)
+    doc_info = st.session_state.topic_model.get_document_info(st.session_state.data[st.session_state.text_column])
+    topic_words = [doc_info[doc_info['Topic'] == i]['Name'].iloc[0].split('_')[1:] for i in search_topics]
+    search_results = pd.DataFrame({
+        'Topic': search_topics,
+        'Topic Words': topic_words,
+        'Probability': search_probabilities
+    }).sort_values(by='Probability', ascending=False)
+    search_results = search_results[search_results['Topic'] >= 0]
+    st.write(f"Topics related to '{search_word}':")
+    st.write(search_results)
+    # st.write(doc_info)
 
 #     # # Calculate coherence score
 #     # dictionary = Dictionary(df['processed_text'])
