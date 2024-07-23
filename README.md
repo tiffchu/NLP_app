@@ -6,3 +6,6 @@
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
+
+
+<p align="center"><img src="https://github.com/tiffchu/NLP_app.svg?label=Views&color=fc8e00&labelColor=000" alt="view-count" /></p>
