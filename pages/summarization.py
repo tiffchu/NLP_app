@@ -23,20 +23,18 @@ def summarize_text(text):
 st.title("Abstractive Summarization with Pegasus")
 st.write("Upload a CSV file, select a column, and summarize either a specific row or the entire column.")
 
-if 'uploaded_file' in st.session_state:
-    uploaded_file = st.session_state['uploaded_file']
-    #st.write("File from Main Page:")
-    #st.write(uploaded_file.head())  # Display the DataFrame head
-else:
-    uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
+if 'uploaded_file' not in st.session_state:
+    st.session_state['uploaded_file'] = None
+
+uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
-    if isinstance(uploaded_file, pd.DataFrame):
-        df = uploaded_file
-    else:
-        df = pd.read_csv(uploaded_file)
-        st.session_state['uploaded_file'] = df  # Save the DataFrame to session state
+    df = pd.read_csv(uploaded_file)
+    st.session_state['uploaded_file'] = df  # Save the DataFrame to session state
+else:
+    df = st.session_state['uploaded_file']
 
+if df is not None:
     st.write("Uploaded CSV file:")
     st.write(df.head())
 
@@ -62,8 +60,13 @@ if uploaded_file is not None:
     elif option == "Entire column":
         if st.button("Summarize Entire Column"):
             summaries = []
-            for text in df[column].dropna():
-                summaries.append(summarize_text(text))
+            batch_size = 10 
+            for i in range(0, len(df[column]), batch_size):
+                batch_texts = df[column].dropna().iloc[i:i+batch_size]
+                for text in batch_texts:
+                    summaries.append(summarize_text(text))
             st.write("**Summaries:**")
             for i, summary in enumerate(summaries):
                 st.write(f"**Summary {i + 1}:** {summary}")
+else:
+    st.write("Please upload a CSV file.")
