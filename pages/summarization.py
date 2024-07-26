@@ -1,7 +1,11 @@
 import streamlit as st
 import pandas as pd
 from transformers import PegasusForConditionalGeneration, AutoTokenizer
-import torch
+import torch ; a = torch.ones(1, device="cuda")
+torch.cuda.empty_cache()
+import gc
+
+gc.collect() 
 
 st.set_page_config(
     page_title="Abstractive Summarization App",
@@ -9,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state='auto',
 )
 
-model_name = 'google/pegasus-xsum'
+model_name = 'google/pegasus-cnn_dailymail'
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = PegasusForConditionalGeneration.from_pretrained(model_name).to(device)
@@ -30,7 +34,7 @@ uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
-    st.session_state['uploaded_file'] = df  # Save the DataFrame to session state
+    st.session_state['uploaded_file'] = df  #Save the DataFrame to session state
 else:
     df = st.session_state['uploaded_file']
 
