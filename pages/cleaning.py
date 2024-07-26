@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 from docx import Document
 
 import sys
@@ -57,6 +58,86 @@ def clean_docx_file(file):
 
     return joined_df
 
+def clean_df(df):
+    df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
+    categories = [category for category in df.columns if "Posts in" in category]
+    dfs = []
+
+    for category in categories:
+
+        category_df = df[category][df[category].notnull()]
+
+        if len(category_df) == 0:
+            continue
+
+        non_category_columns = df.loc[:, ~df.columns.str.contains("Posts in")]
+
+        split_df = category_df.str.split(pat= r'(Mentor|Mentee)(\s+\d{4}\-\d{2}\-\d{2},\s\d{2}:\d{2}):\s', n=None, regex=True, expand=True)
+
+        if len(split_df.columns) == 1:
+            split_df = category_df.str.split(pat= r'([Mm]entor|[Mm]entee)\scommented\sat\s(\d?\d:\d{2}[AP]M\s.*\s\d?\d)', n=None, regex=True, expand=True)
+
+        concat_df = pd.concat([non_category_columns, split_df], axis=1).dropna(subset=[0])
+
+          # Select the columns that will be put into "Mentor", "Reponse Datetime", and "Response" columns.
+        mentor_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID',0])][::3]
+        date_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID',0])][1::3]
+        response_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID',0])][2::3]
+
+        # Separate into dataframes each containing one of the new columns and the non-transformed columns
+        response_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID'], value_vars=response_cols, var_name='Response_Col', value_name='Response')
+        date_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID'], value_vars=date_cols, var_name='date_Col', value_name='Response Datetime')
+        mentor_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID'], value_vars=mentor_cols, var_name='mentor_Col', value_name='Mentor')
+
+        # Recombine all of the dataframes, drop 'date_Col', na values, and duplicates
+        joined_df = pd.concat([date_df, response_df['Response'], mentor_df['Mentor']], axis=1)
+        joined_df = joined_df.drop(columns=['date_Col']).dropna().drop_duplicates()
+
+        # Add category column and set to current category
+        joined_df['Category'] = category
+
+        # Add dataframe to dfs
+        dfs.append(joined_df)
+
+        
+
+    return pd.concat(dfs)
+
+def clean_combined(df):
+    df['Mentor Created at'] = pd.to_datetime(df['Mentor Created at'])
+    df['Response Datetime'] = pd.to_datetime(df['Response Datetime'], format='mixed')
+    df['Response'] = df['Response'].str.strip().dropna()
+    df['Mentor'] = df['Mentor'].str.capitalize()
+    df[['Mentor ID', 'Mentee ID']] = df[['Mentor ID', 'Mentee ID']].astype(np.int64, errors='ignore')
+
+    df['General Category'] = df['Category'].str.replace("\n", " ").str.removeprefix("Posts in ")
+    df['General Category'][df['General Category'].str.lower().str.contains('well.being')] = 'Well Being and Self Care'
+    df['General Category'][df['General Category'].str.lower().str.contains('studying')] = 'Strategic Studying'
+    df['General Category'][df['General Category'].str.lower().str.contains('inspiration')] = 'Finding Inspiration'
+    df['General Category'][df['General Category'].str.lower().str.contains('general')] = 'General Discussion'
+    df['General Category'][df['General Category'].str.lower().str.contains('knowing')] = 'Ways of Knowing'
+    df['General Category'][df['General Category'].str.lower().str.contains('rural.+urban')] = 'From Rural to Urban'
+    df['General Category'][df['General Category'].str.lower().str.contains('paying.+school')] = 'Paying for School'
+    df['General Category'][df['General Category'].str.lower().str.contains('dis.+mis')] = 'Discrimination and Misinformation'
+    df['General Category'][df['General Category'].str.lower().str.contains('agency')] = 'Agency in the World'
+    df['General Category'][df['General Category'].str.lower().str.contains('job')] = 'Getting Hired'
+    df['General Category'][df['General Category'].str.lower().str.contains('hired')] = 'Getting Hired'
+    df['General Category'][df['General Category'].str.lower().str.contains('survey')] = 'Survey'
+    df['General Category'][df['General Category'].str.lower().str.contains('instructions')] = 'Start Here!'
+    df['General Category'][df['General Category'].str.lower().str.contains('start here')] = 'Start Here!'
+    df['General Category'][df['General Category'].str.lower().str.contains('wrapping')] = 'Wrapping Up'
+    df['General Category'][df['General Category'].str.lower().str.contains('career.+tion')] = 'Career Exploration'
+    df['General Category'][df['General Category'].str.lower().str.contains('secondary')] = 'Post-Secondary & Career Planning'
+    df['General Category'][df['General Category'].str.lower().str.contains('confronting')] = 'Confronting Discrimination'
+
+    nan_relationships = df[df['Mentor ID'].isna()]['Relationship ID'].drop_duplicates()
+    for id in nan_relationships:
+        df[df['Relationship ID'] == id]['Mentor ID'] = df[df['Relationship ID'] == id]['Mentor ID'].median()
+        df[df['Relationship ID'] == id]['Mentee ID'] = df[df['Relationship ID'] == id]['Mentee ID'].median()
+        df[df['Relationship ID'] == id]['Response Datetime'] = pd.to_datetime(df[df['Relationship ID'] == id]['Response Datetime'], format='%I:%M%p %B %d').replace()
+
+    return df
+
 st.title("NLP Preprocessing and Topic Modeling App")
 st.write("""
 Upload a CSV file, select a text column for NLP preprocessing,
@@ -75,9 +156,10 @@ if 'raw_data' in st.session_state:
         if file.name[-5:] == '.docx':
             clean_data.append(clean_docx_file(file))
         elif file.name[-5:] == '.xlsx':
-            st.write(file.name)
+            clean_data.append(clean_df(pd.read_excel(file, engine='openpyxl')))
         elif file.name[-4:] == '.csv':
-            st.write(file.name)
+            clean_data.append(clean_df(pd.read_csv(file)))
 
-    for data in clean_data:
-        st.write(data)
+    combined_data = clean_combined(pd.concat(clean_data))
+    st.write(combined_data[combined_data['Mentor ID'].isna()])
+    # st.write(combined_data)
