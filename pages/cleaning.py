@@ -58,6 +58,17 @@ def clean_docx_file(file):
 
     return joined_df
 
+def clean_xlsx_file(file):
+    excel_file = pd.ExcelFile(file)
+    sheet_names = excel_file.sheet_names
+    dfs = pd.read_excel(excel_file, sheet_name=None)
+    results= []
+    for sheet in sheet_names:
+        result = clean_df(dfs[sheet])
+        results.append(result)
+    return pd.concat(results)
+        
+
 def clean_df(df):
     df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
     categories = [category for category in df.columns if "Posts in" in category]
@@ -72,22 +83,29 @@ def clean_df(df):
 
         non_category_columns = df.loc[:, ~df.columns.str.contains("Posts in")]
 
-        split_df = category_df.str.split(pat= r'(Mentor|Mentee)(\s+\d{4}\-\d{2}\-\d{2},\s\d{2}:\d{2}):\s', n=None, regex=True, expand=True)
+        # split_df = category_df.str.split(pat= r'(Mentor|Mentee)(\s+\d{4}\-\d{2}\-\d{2},?\s\d{2}:\d{2}):\s|([Mm]entor|[Mm]entee)\scommented\sat\s(\d?\d:\d{2}[AP]M\s.*\s\d?\d)', n=None, regex=True, expand=True)
+        split_df = category_df.str.split(pat= r'(Mentor|Mentee)(\scommented\sat\s)?(\s+\d{4}\-\d{2}\-\d{2},?\s\d{2}:\d{2}|\d?\d:\d{2}[AP]M\s.*\s\d?\d):?\s', n=None, regex=True, expand=True)
 
-        if len(split_df.columns) == 1:
-            split_df = category_df.str.split(pat= r'([Mm]entor|[Mm]entee)\scommented\sat\s(\d?\d:\d{2}[AP]M\s.*\s\d?\d)', n=None, regex=True, expand=True)
+        # this = False
+        # if len(split_df.columns) == 1:
+        #     split_df = category_df.str.split(pat= r'([Mm]entor|[Mm]entee)\scommented\sat\s(\d?\d:\d{2}[AP]M\s.*\s\d?\d)', n=None, regex=True, expand=True)
+        #     this = True
 
         concat_df = pd.concat([non_category_columns, split_df], axis=1).dropna(subset=[0])
 
           # Select the columns that will be put into "Mentor", "Reponse Datetime", and "Response" columns.
-        mentor_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID',0])][::3]
-        date_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID',0])][1::3]
-        response_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID',0])][2::3]
+        mentor_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID', 'Relation[Created At]', 0])][::4]
+        date_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID', 'Relation[Created At]',0])][2::4]
+        response_cols = concat_df.columns[~concat_df.columns.isin(['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID', 'Relation[Created At]', 0])][3::4]
 
         # Separate into dataframes each containing one of the new columns and the non-transformed columns
-        response_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID'], value_vars=response_cols, var_name='Response_Col', value_name='Response')
-        date_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID'], value_vars=date_cols, var_name='date_Col', value_name='Response Datetime')
-        mentor_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID', 'Mentor Created at', 'Relationship ID'], value_vars=mentor_cols, var_name='mentor_Col', value_name='Mentor')
+        response_df = pd.melt(concat_df, id_vars=df.columns[~df.columns.str.contains("Posts in")], value_vars=response_cols, var_name='Response_Col', value_name='Response')
+        date_df = pd.melt(concat_df, id_vars=df.columns[~df.columns.str.contains("Posts in")], value_vars=date_cols, var_name='date_Col', value_name='Response Datetime')
+        mentor_df = pd.melt(concat_df, id_vars=df.columns[~df.columns.str.contains("Posts in")], value_vars=mentor_cols, var_name='mentor_Col', value_name='Mentor')
+        # except:
+        #     response_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID'], value_vars=response_cols, var_name='Response_Col', value_name='Response')
+        #     date_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID'], value_vars=date_cols, var_name='date_Col', value_name='Response Datetime')
+        #     mentor_df = pd.melt(concat_df, id_vars=['Mentor ID', 'Mentee ID'], value_vars=mentor_cols, var_name='mentor_Col', value_name='Mentor')
 
         # Recombine all of the dataframes, drop 'date_Col', na values, and duplicates
         joined_df = pd.concat([date_df, response_df['Response'], mentor_df['Mentor']], axis=1)
@@ -130,13 +148,16 @@ def clean_combined(df):
     df['General Category'][df['General Category'].str.lower().str.contains('secondary')] = 'Post-Secondary & Career Planning'
     df['General Category'][df['General Category'].str.lower().str.contains('confronting')] = 'Confronting Discrimination'
 
-    nan_relationships = df[df['Mentor ID'].isna()]['Relationship ID'].drop_duplicates()
-    for id in nan_relationships:
-        df[df['Relationship ID'] == id]['Mentor ID'] = df[df['Relationship ID'] == id]['Mentor ID'].median()
-        df[df['Relationship ID'] == id]['Mentee ID'] = df[df['Relationship ID'] == id]['Mentee ID'].median()
-        df[df['Relationship ID'] == id]['Response Datetime'] = pd.to_datetime(df[df['Relationship ID'] == id]['Response Datetime'], format='%I:%M%p %B %d').replace()
+    # nan_relationships = df[df['Mentor ID'].isna()]['Relationship ID'].drop_duplicates()
+    # for id in nan_relationships:
+    #     # df.loc[df['Relationship ID'] == id, 'Mentor ID'] = 
+    #     print(df[df['Relationship ID'] == id]['Mentor ID'].median())
+    #     df[df['Relationship ID'] == id]['Mentee ID'] = df[df['Relationship ID'] == id]['Mentee ID'].median()
+    #     df[df['Relationship ID'] == id]['Response Datetime'] = pd.to_datetime(df[df['Relationship ID'] == id]['Response Datetime'], format='%I:%M%p %B %d').replace()
 
-    return df
+    # print(sum(df['Mentor ID'].isna()))
+
+    return df.reset_index().drop('index', axis=1)
 
 st.title("NLP Preprocessing and Topic Modeling App")
 st.write("""
@@ -156,10 +177,9 @@ if 'raw_data' in st.session_state:
         if file.name[-5:] == '.docx':
             clean_data.append(clean_docx_file(file))
         elif file.name[-5:] == '.xlsx':
-            clean_data.append(clean_df(pd.read_excel(file, engine='openpyxl')))
+            clean_data.append(clean_xlsx_file(file))
         elif file.name[-4:] == '.csv':
             clean_data.append(clean_df(pd.read_csv(file)))
 
     combined_data = clean_combined(pd.concat(clean_data))
-    st.write(combined_data[combined_data['Mentor ID'].isna()])
-    # st.write(combined_data)
+    st.write(combined_data)
