@@ -1,8 +1,12 @@
 import pandas as pd
 import streamlit as st
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-import torch
-import numpy as np
+from transformers import pipeline
+# from transformers import (
+#     pipeline,
+#     AutoTokenizer
+# )
+import scipy
+
 
 st.set_page_config(
     page_title="Emotion Detection App",
@@ -13,7 +17,7 @@ st.set_page_config(
 st.title("Emotion Detection with BART")
 st.write("""
 Upload a CSV file, select a text column for NLP preprocessing,
-and perform emotion detection.
+and perform emotion detection. 
 """)
 
 if 'uploaded_file' not in st.session_state:
@@ -23,7 +27,7 @@ uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
     df = pd.read_csv(uploaded_file)
-    st.session_state['uploaded_file'] = df  # Save the DataFrame to session state
+    st.session_state['uploaded_file'] = df  
 else:
     df = st.session_state['uploaded_file']
 
@@ -33,9 +37,7 @@ if df is not None:
 
     text_column = st.selectbox("Select the text column for emotion detection", df.columns)
 
-    model_name = "facebook/bart-large-mnli"
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForSequenceClassification.from_pretrained(model_name)
+    classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
 
     mood_categories = [
         "happiness", "excitement", "gratitude", "contempt", "sadness", "nervousness",
@@ -51,13 +53,6 @@ if df is not None:
         custom_emotion = st.text_input("Enter your custom emotion")
         if custom_emotion:
             selection.append(custom_emotion)
-
-    def classify_text(texts, labels):
-        inputs = tokenizer(texts, padding=True, truncation=True, return_tensors="pt")
-        outputs = model(**inputs)
-        logits = outputs.logits.detach().cpu().numpy()
-        scores = np.exp(logits) / np.exp(logits).sum(-1, keepdims=True)
-        return scores
 
     if st.button("Perform Emotion Detection"):
         mentee_sample_data = df[df['Mentor'] == 'Mentee']
@@ -76,13 +71,14 @@ if df is not None:
 
         predicted_labels = []
         predicted_scores = []
+        results = []
 
         for text, timestamp in zip(mentee_filtered_texts_list, mentee_filtered_timestamps_list):
-            scores = classify_text([text], selection)
-            scores = scores.flatten()
-            top_scores = sorted(zip(selection, scores), key=lambda x: x[1], reverse=True)[:5]
-            predicted_labels.append([label for label, score in top_scores])
-            predicted_scores.append([score for label, score in top_scores])
+            result = classifier(text, candidate_labels=selection)
+            results.append((result, timestamp))
+            labels_above_threshold = [(label, round(score, 6)) for label, score in zip(result['labels'], result['scores']) if score > 0]
+            predicted_labels.append([label for label, score in labels_above_threshold])
+            predicted_scores.append([score for label, score in labels_above_threshold])
 
         data = {
             'Timestamp': mentee_filtered_timestamps_list,
@@ -92,6 +88,7 @@ if df is not None:
         }
 
         predicted_df = pd.DataFrame(data)
+
         final_df = pd.merge(df, predicted_df, on=text_column, how='inner')
 
         pd.set_option('display.max_colwidth', None)
