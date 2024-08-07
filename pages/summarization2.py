@@ -1,6 +1,7 @@
 import streamlit as st
 import torch
 from transformers import PegasusForConditionalGeneration, AutoTokenizer
+from transformers import PegasusTokenizer
 
 model_name = 'google/pegasus-cnn_dailymail'
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
