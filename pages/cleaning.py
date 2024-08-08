@@ -6,15 +6,6 @@ from docx import Document
 import sys
 import os
 
-# # Get the parent directory
-# parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-
-# # Add the parent directory to sys.path
-# sys.path.append(parent_dir)
-
-# # Now you can import modules from the parent directory
-# from utils.file_cleaners import clean_docx_file
-
 def update_raw_data(raw_data):
     st.session_state.raw_data = raw_data
 
@@ -126,36 +117,32 @@ def clean_combined(df):
     df['Response Datetime'] = pd.to_datetime(df['Response Datetime'], format='mixed')
     df['Response'] = df['Response'].str.strip().dropna()
     df['Mentor'] = df['Mentor'].str.capitalize()
-    df[['Mentor ID', 'Mentee ID']] = df[['Mentor ID', 'Mentee ID']].astype(np.int64, errors='ignore')
+    df.loc[:, ['Mentor ID', 'Mentee ID']] = df[['Mentor ID', 'Mentee ID']].astype(np.int64, errors='ignore')
 
     df['General Category'] = df['Category'].str.replace("\n", " ").str.removeprefix("Posts in ")
-    df['General Category'][df['General Category'].str.lower().str.contains('well.being')] = 'Well Being and Self Care'
-    df['General Category'][df['General Category'].str.lower().str.contains('studying')] = 'Strategic Studying'
-    df['General Category'][df['General Category'].str.lower().str.contains('inspiration')] = 'Finding Inspiration'
-    df['General Category'][df['General Category'].str.lower().str.contains('general')] = 'General Discussion'
-    df['General Category'][df['General Category'].str.lower().str.contains('knowing')] = 'Ways of Knowing'
-    df['General Category'][df['General Category'].str.lower().str.contains('rural.+urban')] = 'From Rural to Urban'
-    df['General Category'][df['General Category'].str.lower().str.contains('paying.+school')] = 'Paying for School'
-    df['General Category'][df['General Category'].str.lower().str.contains('dis.+mis')] = 'Discrimination and Misinformation'
-    df['General Category'][df['General Category'].str.lower().str.contains('agency')] = 'Agency in the World'
-    df['General Category'][df['General Category'].str.lower().str.contains('job')] = 'Getting Hired'
-    df['General Category'][df['General Category'].str.lower().str.contains('hired')] = 'Getting Hired'
-    df['General Category'][df['General Category'].str.lower().str.contains('survey')] = 'Survey'
-    df['General Category'][df['General Category'].str.lower().str.contains('instructions')] = 'Start Here!'
-    df['General Category'][df['General Category'].str.lower().str.contains('start here')] = 'Start Here!'
-    df['General Category'][df['General Category'].str.lower().str.contains('wrapping')] = 'Wrapping Up'
-    df['General Category'][df['General Category'].str.lower().str.contains('career.+tion')] = 'Career Exploration'
-    df['General Category'][df['General Category'].str.lower().str.contains('secondary')] = 'Post-Secondary & Career Planning'
-    df['General Category'][df['General Category'].str.lower().str.contains('confronting')] = 'Confronting Discrimination'
+    df.loc[df['General Category'].str.lower().str.contains('well.being'), 'General Category'] = 'Well Being and Self Care'
+    df.loc[df['General Category'].str.lower().str.contains('studying'), 'General Category'] = 'Strategic Studying'
+    df.loc[df['General Category'].str.lower().str.contains('inspiration'), 'General Category'] = 'Finding Inspiration'
+    df.loc[df['General Category'].str.lower().str.contains('general'), 'General Category'] = 'General Discussion'
+    df.loc[df['General Category'].str.lower().str.contains('knowing'), 'General Category'] = 'Ways of Knowing'
+    df.loc[df['General Category'].str.lower().str.contains('rural.+urban'), 'General Category'] = 'From Rural to Urban'
+    df.loc[df['General Category'].str.lower().str.contains('paying.+school'), 'General Category'] = 'Paying for School'
+    df.loc[df['General Category'].str.lower().str.contains('dis.+mis'),'General Category'] = 'Discrimination and Misinformation'
+    df.loc[df['General Category'].str.lower().str.contains('agency'), 'General Category'] = 'Agency in the World'
+    df.loc[df['General Category'].str.lower().str.contains('job'), 'General Category'] = 'Getting Hired'
+    df.loc[df['General Category'].str.lower().str.contains('hired'), 'General Category'] = 'Getting Hired'
+    df.loc[df['General Category'].str.lower().str.contains('survey'), 'General Category'] = 'Survey'
+    df.loc[df['General Category'].str.lower().str.contains('instructions'), 'General Category'] = 'Start Here!'
+    df.loc[df['General Category'].str.lower().str.contains('start here'), 'General Category'] = 'Start Here!'
+    df.loc[df['General Category'].str.lower().str.contains('wrapping'), 'General Category']= 'Wrapping Up'
+    df.loc[df['General Category'].str.lower().str.contains('career.+tion'), 'General Category'] = 'Career Exploration'
+    df.loc[df['General Category'].str.lower().str.contains('secondary'), 'General Category'] = 'Post-Secondary & Career Planning'
+    df.loc[df['General Category'].str.lower().str.contains('confronting'), 'General Category'] = 'Confronting Discrimination'
 
-    # nan_relationships = df[df['Mentor ID'].isna()]['Relationship ID'].drop_duplicates()
-    # for id in nan_relationships:
-    #     # df.loc[df['Relationship ID'] == id, 'Mentor ID'] = 
-    #     print(df[df['Relationship ID'] == id]['Mentor ID'].median())
-    #     df[df['Relationship ID'] == id]['Mentee ID'] = df[df['Relationship ID'] == id]['Mentee ID'].median()
-    #     df[df['Relationship ID'] == id]['Response Datetime'] = pd.to_datetime(df[df['Relationship ID'] == id]['Response Datetime'], format='%I:%M%p %B %d').replace()
-
-    # print(sum(df['Mentor ID'].isna()))
+    nan_relationships = df[df['Mentor ID'].isna()]['Relationship ID'].drop_duplicates()
+    for id in nan_relationships:
+        df.loc[df['Relationship ID'] == id, 'Mentor ID'] = df[df['Relationship ID'] == id]['Mentor ID'].median()
+        df.loc[df['Relationship ID'] == id, 'Mentee ID'] = df[df['Relationship ID'] == id]['Mentee ID'].median()
 
     return df.reset_index().drop('index', axis=1)
 
