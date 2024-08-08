@@ -1,18 +1,7 @@
 import streamlit as st
 import torch
-from transformers import PegasusForConditionalGeneration, AutoTokenizer
+from transformers import PegasusForConditionalGeneration#, AutoTokenizer
 from transformers import PegasusTokenizer
-
-model_name = 'google/pegasus-cnn_dailymail'
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = PegasusForConditionalGeneration.from_pretrained(model_name).to(device)
-
-def summarize_text(text):
-    batch = tokenizer(text, truncation=True, padding='longest', return_tensors="pt").to(device)
-    translated = model.generate(**batch)
-    summary = tokenizer.batch_decode(translated, skip_special_tokens=True)[0]
-    return summary
 
 st.set_page_config(
     page_title="Abstractive Summarization App",
@@ -25,7 +14,7 @@ st.write("Enter a paragraph of text to get its abstractive summary.")
 
 model_name = 'google/pegasus-cnn_dailymail'
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+tokenizer = PegasusTokenizer.from_pretrained(model_name)
 model = PegasusForConditionalGeneration.from_pretrained(model_name).to(device)
 
 def summarize_text(text):

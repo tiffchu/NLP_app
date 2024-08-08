@@ -16,3 +16,5 @@ seaborn
 numpy
 gensim
 docx
+sentencepiece
+torch
