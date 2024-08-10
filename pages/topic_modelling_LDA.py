@@ -9,6 +9,7 @@ from gensim import corpora
 import plotly.express as px
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
+import sys 
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -119,4 +120,9 @@ if uploaded_file is not None:
         st.write(f"Topic {i+1}")
         words = [word for word, _ in topic[1]]
         create_wordcloud(words, f"Topic {i+1}")
-  
+
+for i in range(4000):
+    try:
+        print(i, flush=True)
+    except BrokenPipeError:
+        sys.stdout = None
