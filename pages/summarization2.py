@@ -1,6 +1,6 @@
 import streamlit as st
 import torch
-from transformers import PegasusForConditionalGeneration#, AutoTokenizer
+from transformers import PegasusForConditionalGeneration, AutoTokenizer
 from transformers import PegasusTokenizer
 
 st.set_page_config(
@@ -9,10 +9,13 @@ st.set_page_config(
     initial_sidebar_state='auto',
 )
 
+model_name = 'google/pegasus-multi_news'
+
 st.title("Abstractive Summarization with Pegasus")
 st.write("Enter a paragraph of text to get its abstractive summary.")
+st.write("fine-tuned on:", model_name)
 
-model_name = 'google/pegasus-cnn_dailymail'
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 tokenizer = PegasusTokenizer.from_pretrained(model_name)
 model = PegasusForConditionalGeneration.from_pretrained(model_name).to(device)

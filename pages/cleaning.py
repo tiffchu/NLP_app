@@ -146,10 +146,10 @@ def clean_combined(df):
 
     return df.reset_index().drop('index', axis=1)
 
-st.title("NLP Preprocessing and Topic Modeling App")
+st.title("docx and CSV cleaning App")
 st.write("""
-Upload a CSV file, select a text column for NLP preprocessing,
-and perform topic modeling to visualize the topics using BERTopic.
+Upload a XLSX, docx, or csv file,
+and select.......
 """)
 
 files = st.file_uploader("Choose files containing data", type=['csv', 'xlsx', 'docs', 'docx'], accept_multiple_files=True)
