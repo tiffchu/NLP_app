@@ -149,7 +149,7 @@ def clean_combined(df):
 st.title("docx and CSV cleaning App")
 st.write("""
 Upload a XLSX, docx, or csv file,
-and select.......
+and click button
 """)
 
 files = st.file_uploader("Choose files containing data", type=['csv', 'xlsx', 'docs', 'docx'], accept_multiple_files=True)

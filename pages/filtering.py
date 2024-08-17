@@ -10,7 +10,8 @@ def count_words(text):
         return len(text.split())
     return 0
 
-st.title("EDA (Exploratory Data Analysis)")
+st.title("Dataset Filtering and Exploratory Data Analysis")
+st.write("Works only with cleaned datasets")
 
 if 'uploaded_file' in st.session_state:
     uploaded_file = st.session_state['uploaded_file']
@@ -42,34 +43,68 @@ if uploaded_file is not None:
             filtered_df = df[df[selected_column] == selected_category]
             st.write(filtered_df)
 
-        show_only_column = st.checkbox(f"Show single column (optional)")
+        show_only_column0 = st.checkbox(f"Show single column (optional)", key="show_only_column0")
 
-        if show_only_column:
-                selected_column1 = st.selectbox("Show specific column only)", columns)
+        if show_only_column0:
+                selected_column1 = st.selectbox("Show specific column only)", columns, key="selected_column1")
                 st.write(filtered_df[selected_column1])
 
-                filter_text = st.checkbox(f"Filter text column (optional)")
+                # filter_text = st.checkbox(f"Filter text column (optional)")
 
-                if filter_text:
-                    text_columns = [col for col in columns if df[col].dtype == 'object']
-                    selected_text_column = st.selectbox("Select RESPONSE(text) column for filtering", text_columns)
+                # if filter_text:
+                #     text_columns = [col for col in columns if df[col].dtype == 'object']
+                #     selected_text_column = st.selectbox("Select RESPONSE(text) column for filtering", text_columns)
 
-                    if selected_text_column:
-                        filter_option = st.radio(
-                            "Filter text based on word count",
-                            ("Show all", "More than 20 words", "More than 50 words")
-                        )
+        # if selected_text_column:
+        # text_columns = [col for col in columns if df[col].dtype == 'object']
+        # selected_text_column = st.selectbox("Select RESPONSE(text) column for filtering", text_columns)
+        # filter_option = st.radio(
+        #                     "Filter text based on word count",
+        #                    # ("Show all", "More than 20 words", "More than 50 words")
+        #                     ("Show all", "More than [a custom number] of words")
+        #                 )
 
-                        # if filter_option == "More than 20 words":
-                        #     filtered_df = filtered_df[filtered_df[selected_text_column].apply(count_words) > 20]
-                        # elif filter_option == "More than 50 words":
-                        #     filtered_df = filtered_df[filtered_df[selected_text_column].apply(count_words) > 50]
-                        if filter_option == "Show all":
-                            st.write(filtered_df[filtered_df[selected_text_column].apply(count_words) > 0])
-                        elif filter_option == "More than 20 words":
-                            st.write(filtered_df[filtered_df[selected_text_column].apply(count_words) > 20])
-                        elif filter_option == "More than 50 words":
-                            st.write(filtered_df[filtered_df[selected_text_column].apply(count_words) > 50])
+        # if filter_option == "Show all":
+        #                     st.write(filtered_df[filtered_df[selected_text_column].apply(count_words) > 0])
+
+        #                     show_only_column = st.checkbox(f"Show single column (optional)")
+                            
+        #                     if show_only_column:
+        #                            selected_column1 = st.selectbox("Show specific column only)", columns)
+        #                            st.write(filtered_df[selected_column1])
+
+        # elif filter_option == "More than [a custom number] of words":
+        #                     custom_word_count = st.number_input("Enter the minimum number of words:", min_value=1, value=20)
+        #                     st.write(filtered_df[filtered_df[selected_text_column].apply(count_words) > custom_word_count])
+                            
+        #                     show_only_column = st.checkbox(f"Show single column (optional)")
+        #                     if show_only_column:
+        #                            selected_column1 = st.selectbox("Show specific column only)", columns)
+        #                            st.write(filtered_df[selected_column1])
+
+    text_columns = [col for col in columns if df[col].dtype == 'object']
+
+    selected_text_column = st.selectbox("Select RESPONSE (text) column for filtering", text_columns)
+
+    filter_option = st.radio(
+        "Filter text based on word count",
+        ("Show all", "More than [a custom number] of words")
+    )
+
+    if filter_option == "Show all":
+        filtered_data = filtered_df[filtered_df[selected_text_column].apply(count_words) > 0]
+    elif filter_option == "More than [a custom number] of words":
+        custom_word_count = st.number_input("Enter the minimum number of words:", min_value=1, value=20)
+        filtered_data = filtered_df[filtered_df[selected_text_column].apply(count_words) > custom_word_count]
+
+    st.write(filtered_data)
+
+    show_only_column2 = st.checkbox("Show single column (optional)", key="show_only_column2")
+
+    if show_only_column2:
+        selected_column2 = st.selectbox("Select column to display", columns, key="selected_column2")
+        st.write(filtered_data[selected_column2])
+
     st.write("")
     st.write("")    
 
