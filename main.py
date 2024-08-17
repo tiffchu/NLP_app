@@ -24,4 +24,21 @@ if uploaded_file is not None:
     st.write("Uploaded CSV file:")
     st.write(df.head())
 
-st.write('Find out more about each tool:')
+
+st.write('Find out more about each tool in the column bar on the left:')
+
+st.write("*Cleaning:*")
+st.markdown("**Upload dataset(s) in .word, .xlsx, or .csv format, and it'll separate responses that are in the same cell into different rows**")
+
+st.write("*Filtering and Analysis:*")
+st.markdown("**Filter for text of a specific category, or a specific word length. See visualizations of the words or the columns**")
+
+st.write("*Abstractive Summarization:*")
+st.markdown("**Copy and paste paragraphs of text into our website, and it'll output a summarized version of the text**")
+
+st.write("*Mood Detection:*")
+st.markdown("**Mood detection provides us with the magnitudes of each of the inputted emotions from a given dataset**")
+
+st.write("*Topic Modelling BERT and LDA:*")
+st.markdown("**Topic Modeling, which is the process of extracting common themes from text, by picking groups of similar words that often appear together in texts. BERT and LDA are two different algorithms used for topic modelling, we prefer the former**")
+
