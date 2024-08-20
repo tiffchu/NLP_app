@@ -16,7 +16,7 @@ st.write("Works only with cleaned datasets")
 if 'uploaded_file' in st.session_state:
     uploaded_file = st.session_state['uploaded_file']
     #st.write("File from Main Page:")
-    #st.write(uploaded_file.head())  # Display the DataFrame head
+    #st.write(uploaded_file.head()) 
 else:
     uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
@@ -25,7 +25,7 @@ if uploaded_file is not None:
         df = uploaded_file
     else:
         df = pd.read_csv(uploaded_file)
-        st.session_state['uploaded_file'] = df  # Save the DataFrame to session state
+        st.session_state['uploaded_file'] = df  
 
     st.write("Uploaded CSV file:")
     st.write(df.head())
@@ -84,7 +84,7 @@ if uploaded_file is not None:
 
     text_columns = [col for col in columns if df[col].dtype == 'object']
 
-    selected_text_column = st.selectbox("Select RESPONSE (text) column for filtering", text_columns)
+    selected_text_column = st.selectbox("Select text('response') column for filtering", text_columns)
 
     filter_option = st.radio(
         "Filter text based on word count",
@@ -116,6 +116,13 @@ if uploaded_file is not None:
         st.write(df[selected_columns].describe())
 
         plot_type = st.selectbox("Select plot type", ["Histogram", "Boxplot", "Scatter Matrix", "Correlation Heatmap"])
+
+        # if plot_type == "Bar":
+        #     for column in selected_columns:
+        #         st.write(f"Bar for {column}")
+        #         fig, ax = plt.subplots()
+        #         sns.barplot(x=df[column], ax=ax)
+        #         st.pyplot(fig)
 
         if plot_type == "Histogram":
             for column in selected_columns:
