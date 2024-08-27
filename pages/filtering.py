@@ -10,6 +10,36 @@ def count_words(text):
         return len(text.split())
     return 0
 
+# def calculate_relationship_duration_and_responses(df):
+#     df['Response Datetime'] = pd.to_datetime(df['Response Datetime'])
+#     grouped_df = df.groupby(['Mentor ID', 'Mentee ID', "Relationship ID"]).agg(
+#         First_Response=('Response Datetime', 'min'),
+#         Last_Response=('Response Datetime', 'max'),
+#         Number_of_Responses=('Response', 'count')
+#     ).reset_index()
+#     grouped_df['Relationship Duration'] = grouped_df['Last_Response'] - grouped_df['First_Response']
+#     return grouped_df.drop(columns=['First_Response', 'Last_Response'])
+
+def calculate_relationship_duration_and_responses(df):
+    df['Response Datetime'] = pd.to_datetime(df['Response Datetime'])
+    
+    # cumulative count of responses
+    df = df.sort_values(by=['Mentor ID', 'Mentee ID', 'Relationship ID', 'Response Datetime'])
+    df['Current Number of Responses'] = df.groupby(['Mentor ID', 'Mentee ID', 'Relationship ID']).cumcount() + 1
+    
+    grouped_df = df.groupby(['Mentor ID', 'Mentee ID', "Relationship ID"]).agg(
+        First_Response=('Response Datetime', 'min'),
+        Last_Response=('Response Datetime', 'max'),
+        Total_Number_of_Responses=('Response', 'count')
+    ).reset_index()
+    
+    grouped_df['Relationship Duration'] = grouped_df['Last_Response'] - grouped_df['First_Response']
+    
+    df = pd.merge(df, grouped_df[['Mentor ID', 'Mentee ID', 'Relationship ID', 'Relationship Duration', 'Total_Number_of_Responses']],
+                  on=['Mentor ID', 'Mentee ID', 'Relationship ID'], how='left')
+    
+    return df
+
 st.title("Dataset Filtering and Exploratory Data Analysis")
 st.write("Works only with cleaned datasets")
 
@@ -30,6 +60,12 @@ if uploaded_file is not None:
     st.write("Uploaded CSV file:")
     st.write(df.head())
     
+    result_df = calculate_relationship_duration_and_responses(df)
+    df = pd.merge(df, result_df, on=['Mentor ID', 'Mentee ID', 'Relationship ID'], how='left')
+    
+    st.write("Adding Relationship Duration and Number of Responses in the relationship so far:")
+    st.write(df.drop(columns=['Response_x','Mentor Created at_x','Mentor Created at_y','Mentor_x', 'Category_x']))
+
     columns = df.columns.tolist()
 
     selected_column = st.selectbox("Select column for filtering - only works for categorical columns", columns)
