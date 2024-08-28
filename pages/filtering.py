@@ -61,12 +61,18 @@ if uploaded_file is not None:
     
     result_df = calculate_relationship_duration_and_responses(df)
     df = pd.merge(df, result_df, on=['Mentor ID', 'Mentee ID', 'Relationship ID'], how='left')
-
     df = df.drop(columns=['Response_x','Mentor Created at_x','Mentor Created at_y','Mentor_x', 'Category_x','Response Datetime_x'])
     
     st.write("Adding Relationship Duration and Number of Responses in the relationship so far:")
-
     st.write(df)
+
+    csv = df.to_csv(index=False)
+    st.download_button(
+        label="Download new dataset with Relationship Duration and Number of Responses as CSV",
+        data=csv,
+        file_name='dataset_with_message_metrics.csv',
+        mime='text/csv',
+    )
 
     columns = df.columns.tolist()
 
