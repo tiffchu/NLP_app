@@ -18,3 +18,4 @@ gensim
 docx
 sentencepiece
 torch
+chardet

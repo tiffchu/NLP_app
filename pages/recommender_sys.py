@@ -38,7 +38,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.neighbors import NearestNeighbors
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler
-
+import chardet
 nltk.download('stopwords')
 
 warnings.filterwarnings("ignore", message="A parameter name that contains `beta` will be renamed internally to `bias`")
@@ -49,6 +49,8 @@ st.set_page_config(
     page_icon="😊",
     initial_sidebar_state='auto',
 )
+
+#  full width dataframe
 hide_dataframe_row_index = """
             <style>
             .css-1uixr1i.e16nr0p30 {
@@ -59,7 +61,6 @@ hide_dataframe_row_index = """
             }
             </style>
             """
-#    CSS with Markdown
 st.markdown(hide_dataframe_row_index, unsafe_allow_html=True)
 
 st.title("User Matching Recommender System")
@@ -68,7 +69,12 @@ st.write("""Upload a CSV file with a user profile in each row""")
 uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
-    df = pd.read_csv(uploaded_file, encoding='utf-8')
+
+    raw_data = uploaded_file.read()
+    result = chardet.detect(raw_data)
+    encoding = result['encoding']
+    uploaded_file.seek(0)
+    df = pd.read_csv(uploaded_file, encoding=encoding)
     df = df.astype(str)
     df = df.head(500)
     df = df.sample(frac=0.1, random_state=42)
@@ -138,18 +144,18 @@ if uploaded_file is not None:
         }
         results.append(result)
 
-results_df = pd.DataFrame(results)
-pd.set_option('display.max_colwidth', None)
-#change Neighbors to string for serialization
-results_df['Nearest Neighbors'] = results_df['Nearest Neighbors'].apply(lambda x: str(x) if isinstance(x, list) else x)
+    results_df = pd.DataFrame(results)
+    pd.set_option('display.max_colwidth', None)
+    #change Neighbors to string for serialization
+    results_df['Nearest Neighbors'] = results_df['Nearest Neighbors'].apply(lambda x: str(x) if isinstance(x, list) else x)
 
-st.write("Matching Results:")
-st.dataframe(results_df)
+    st.write("Matching Results:")
+    st.dataframe(results_df)
 
-csv = results_df.to_csv(index=False)
-st.download_button(
-    label="Download Matching Results as CSV",
-    data=csv,
-    file_name='mentor_mentee_matching_results.csv',
-    mime='text/csv',
-)
+    csv = results_df.to_csv(index=False)
+    st.download_button(
+        label="Download Matching Results as CSV",
+        data=csv,
+        file_name='mentor_mentee_matching_results.csv',
+        mime='text/csv',
+    )
