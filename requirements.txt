@@ -15,7 +15,7 @@ plotly
 seaborn 
 numpy
 gensim
-docx
+python-docx
 sentencepiece
 torch
 chardet
