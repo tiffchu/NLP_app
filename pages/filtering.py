@@ -151,8 +151,6 @@ def plot_responses_over_time(df, selected_relationship_id):
     plt.grid(True)
     st.pyplot(plt)
 
-
-
 relationship_ids = df['Relationship ID'].unique()
 selected_relationship_id = st.selectbox("Select Relationship ID to visualize", relationship_ids)
     
