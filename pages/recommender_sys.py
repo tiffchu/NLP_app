@@ -77,7 +77,7 @@ if uploaded_file is not None:
     df = pd.read_csv(uploaded_file, encoding=encoding)
     df = df.astype(str)
     df = df.head(500)
-    df = df.sample(frac=0.1, random_state=42)
+  #  df = df.sample(frac=0.1, random_state=42)
 
     model = BertModel.from_pretrained('bert-base-uncased')
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
