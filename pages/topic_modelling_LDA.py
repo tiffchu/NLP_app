@@ -10,6 +10,8 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud
 import sys 
+from sklearn.manifold import TSNE
+import numpy as np
 
 nltk.download('punkt')
 nltk.download('stopwords')
@@ -50,6 +52,69 @@ def visualize_topics_plotly(lda_model):
     
     return fig
 
+
+def get_document_topics_matrix(lda_model, corpus, num_topics):
+    """Convert document-topic distributions to a matrix format."""
+    doc_topics = []
+    for doc in corpus:
+        topic_probs = [0] * num_topics
+        for topic, prob in lda_model.get_document_topics(doc):
+            topic_probs[topic] = prob
+        doc_topics.append(topic_probs)
+    return np.array(doc_topics)
+
+def visualize_topic_clusters(lda_model, corpus, num_topics, df, text_column):
+    """Create an interactive scatter plot of document clusters."""
+    try:
+        # Get document-topic distribution matrix
+        doc_topics_matrix = get_document_topics_matrix(lda_model, corpus, num_topics)
+        
+        # Apply t-SNE for dimensionality reduction
+        tsne = TSNE(n_components=2, random_state=42)
+        doc_topics_2d = tsne.fit_transform(doc_topics_matrix)
+        
+        # Get dominant topics
+        dominant_topics = []
+        for doc in corpus:
+            topic_probs = lda_model.get_document_topics(doc)
+            dominant_topic = max(topic_probs, key=lambda x: x[1])[0]
+            dominant_topics.append(f"Topic {dominant_topic + 1}")
+        
+        # Create a DataFrame for plotting
+        plot_df = pd.DataFrame({
+            'x': doc_topics_2d[:, 0],
+            'y': doc_topics_2d[:, 1],
+            'Dominant_Topic': dominant_topics,
+            'Original_Text': df[text_column].values
+        })
+        
+        # Create the scatter plot
+        fig = px.scatter(
+            plot_df,
+            x='x',
+            y='y',
+            color='Dominant_Topic',
+            hover_data=['Original_Text'],
+            title='Topic Clusters Visualization (t-SNE)',
+            labels={'Dominant_Topic': 'Main Topic'},
+        )
+        
+        # Update the layout
+        fig.update_traces(marker=dict(size=8))
+        fig.update_layout(
+            plot_bgcolor='white',
+            width=800,
+            height=600,
+            xaxis_title="t-SNE dimension 1",
+            yaxis_title="t-SNE dimension 2"
+        )
+        
+        return fig
+    
+    except Exception as e:
+        st.error(f"Error in visualization: {str(e)}")
+        return None
+    
 # Title and description
 st.title("NLP Preprocessing and Topic Modeling App")
 st.write("""
@@ -93,7 +158,7 @@ if uploaded_file is not None:
     corpus = [dictionary.doc2bow(text) for text in df['processed_text']]
 
     # LDA model
-    num_topics = st.slider("Select number of topics", 2, 10, 5)
+    num_topics = st.slider("Select number of topics", 2, 50, 5)
     lda_model = gensim.models.LdaModel(corpus, num_topics=num_topics, id2word=dictionary, passes=15)
 
     # Show topics
@@ -106,6 +171,17 @@ if uploaded_file is not None:
     st.write("Topic Visualization:")
     fig = visualize_topics_plotly(lda_model)
     st.plotly_chart(fig, use_container_width=True)
+
+
+    # Topic clustering visualization
+    st.write("### Topic Clusters Visualization")
+    st.write("This visualization shows how documents cluster together based on their topic distributions. " 
+                "Documents with similar topic mixtures appear closer together.")
+    
+    clustering_fig = visualize_topic_clusters(lda_model, corpus, num_topics, df, text_column)
+    if clustering_fig:
+        st.plotly_chart(clustering_fig, use_container_width=True)
+
 
     # Search for topics
     search_word = st.text_input("Enter a word to find related topics:")
