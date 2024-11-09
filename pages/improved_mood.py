@@ -39,14 +39,14 @@ if df is not None:
     model = AutoModelForSequenceClassification.from_pretrained(model_name)
 
     mood_categories = [
-        "happiness", "excitement", "gratitude", "contempt", "sadness", "nervousness",
+        "neutral", "happiness", "excitement", "gratitude", "contempt", "sadness", "nervousness",
         "stress", "boredom", "anger", "fear", "surprise", "disgust", "calmness",
         "curiosity", "envy", "guilt", "shame", "pride", "love", "loneliness",
         "hope", "despair", "relief", "anticipation", "trust", "confusion",
         "frustration", "embarrassment", "amusement", "jealousy", "Add emotion"
     ]
 
-    selection = st.multiselect('Select a range of emotions to predict (3 to 9)', options=mood_categories)
+    selection = st.multiselect('Select a range of emotions to predict (pick 3 emotions)', options=mood_categories)
 
     if "Add emotion" in selection:
         custom_emotion = st.text_input("Enter your custom emotion")
@@ -130,7 +130,7 @@ if view_format == "Measure how the mood changes over time for a single relations
     df['Response Datetime'] = pd.to_datetime(df['Response Datetime'])
     df['Year'] = df['Response Datetime'].dt.year
 
-if view_format == "View combined/average moods of all users together (select 3 moods)":
+if view_format == "View combined/average moods of all users together":
     yearly_texts = aggregate_text_by_year(df, text_column, 'Response Datetime')
 
     yearly_emotion_scores = {year: classify_text([text], selection).flatten() for year, text in zip(yearly_texts['Year'], yearly_texts[text_column])}

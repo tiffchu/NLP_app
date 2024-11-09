@@ -84,8 +84,8 @@ def visualize_topic_clusters(lda_model, corpus, num_topics, df, text_column):
         plot_df = pd.DataFrame({
             'x': doc_topics_2d[:, 0],
             'y': doc_topics_2d[:, 1],
-            'Dominant_Topic': dominant_topics,
-            'Original_Text': df[text_column].values
+            'Dominant_Topic': dominant_topics
+            #'Original_Text': df[text_column].values
         })
         
         # Create the scatter plot
@@ -161,6 +161,16 @@ if uploaded_file is not None:
     num_topics = st.slider("Select number of topics", 2, 50, 5)
     lda_model = gensim.models.LdaModel(corpus, num_topics=num_topics, id2word=dictionary, passes=15)
 
+
+    # Topic clustering visualization
+    st.write("### Topic Clusters Visualization")
+    st.write("This visualization shows how documents cluster together based on their topic distributions. " 
+                "Documents with similar topic words appear closer together.")
+    
+    clustering_fig = visualize_topic_clusters(lda_model, corpus, num_topics, df, text_column)
+    if clustering_fig:
+        st.plotly_chart(clustering_fig, use_container_width=True)
+
     # Show topics
     st.write("LDA Topics:")
     topics = lda_model.print_topics(num_words=10)
@@ -171,16 +181,6 @@ if uploaded_file is not None:
     st.write("Topic Visualization:")
     fig = visualize_topics_plotly(lda_model)
     st.plotly_chart(fig, use_container_width=True)
-
-
-    # Topic clustering visualization
-    st.write("### Topic Clusters Visualization")
-    st.write("This visualization shows how documents cluster together based on their topic distributions. " 
-                "Documents with similar topic mixtures appear closer together.")
-    
-    clustering_fig = visualize_topic_clusters(lda_model, corpus, num_topics, df, text_column)
-    if clustering_fig:
-        st.plotly_chart(clustering_fig, use_container_width=True)
 
 
     # Search for topics
