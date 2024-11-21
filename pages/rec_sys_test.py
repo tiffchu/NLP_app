@@ -1,30 +1,3 @@
-# import pandas as pd
-# import streamlit as st
-# import numpy as np
-# import matplotlib.pyplot as plt
-
-# st.set_page_config(
-#     page_title="User Matching Recommender System",
-#     page_icon="😊",
-#     initial_sidebar_state='auto',
-# )
-
-# st.title("User Matching Recommender System")
-# st.write("""
-# Upload a CSV file with a user profile in each row
-# """)
-
-# uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
-
-# if uploaded_file is not None:
-#     df = pd.read_csv(uploaded_file)
-#     st.session_state['uploaded_file'] = df
-# else:
-#     df = st.session_state['uploaded_file']
-
-# if df is not None:
-#     st.write("Uploaded CSV file:")
-#     st.write(df.head())
 
 import streamlit as st
 import warnings
@@ -79,6 +52,11 @@ if uploaded_file is not None:
     df = df.head(500)
   #  df = df.sample(frac=0.1, random_state=42)
 
+    required_columns = ['Id', 'Relationship Role']
+    if not all(col in df.columns for col in required_columns):
+        st.error("The uploaded file must include 'Id' and 'Relationship Role' columns.")
+
+
     model = BertModel.from_pretrained('bert-base-uncased')
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
@@ -87,11 +65,12 @@ if uploaded_file is not None:
 
     st.write("Processing Data...")
     
+    # df['Profile'] = (df['[mentor and mentee] Career Interests'] + ' ' + df['[mentor and mentee] Career Interests'] + ' ' + df['[mentor and mentee] Career Interests'] + ' ' +
+    #                  df['[mentor and mentee] Your hobbies'] + ' ' + df['[mentor and mentee] Your hobbies'] + ' ' + df['[mentor and mentee] Your hobbies'] + ' ' +
+    #                  df.drop(columns=['Id', 'Created at', 'Relationship Role', 'Total Mentees', 'Number of Messages Sent', 'Resource Clicks', 'Courses Clicks']).agg(' '.join, axis=1))
 
-    df['Profile'] = (df['[mentor and mentee] Career Interests'] + ' ' + df['[mentor and mentee] Career Interests'] + ' ' + df['[mentor and mentee] Career Interests'] + ' ' +
-                     df['[mentor and mentee] Your hobbies'] + ' ' + df['[mentor and mentee] Your hobbies'] + ' ' + df['[mentor and mentee] Your hobbies'] + ' ' +
-                     df.drop(columns=['Id', 'Created at', 'Relationship Role', 'Total Mentees', 'Number of Messages Sent', 'Resource Clicks', 'Courses Clicks']).agg(' '.join, axis=1))
-#TODO TODO TODO  change the above so weight of cols can be adjusted^ change so that it takes all columns after third col
+    df['Profile'] = df.iloc[:, 2:].agg(' '.join, axis=1)
+
     stop_words = set(stopwords.words('english'))
     df['Profile'] = df['Profile'].apply(lambda x: ' '.join([word for word in x.split() if word.lower() not in stop_words]))
 
@@ -128,35 +107,144 @@ if uploaded_file is not None:
 
     distances, indices = knn.kneighbors(X_reduced)
 
+    # results = []
+    # for i, profile in enumerate(df['Profile']):
+    #     nearest_neighbors = []
+    #     for j in range(1, k):
+    #         neighbor_role = df.iloc[indices[i][j]]['Relationship Role']
+    #         if df.iloc[i]['Relationship Role'] == 'mentor' and neighbor_role == 'mentee':
+    #             nearest_neighbors.append((df.iloc[indices[i][j]]['Id'], round(1 - distances[i][j], 2), neighbor_role))
+    #         elif df.iloc[i]['Relationship Role'] == 'mentee' and neighbor_role == 'mentor':
+    #             nearest_neighbors.append((df.iloc[indices[i][j]]['Id'], round(1 - distances[i][j], 2), neighbor_role))
+
+    #     result = {
+    #         'Id': df.iloc[i]['Id'],
+    #         'Relationship Role': df.iloc[i]['Relationship Role'],
+    #         'Nearest Neighbors': nearest_neighbors[:k-1]
+    #     }
+    #     results.append(result)
     results = []
     for i, profile in enumerate(df['Profile']):
         nearest_neighbors = []
-        for j in range(1, k):
+        for j in range(k):  # Changed to include all neighbors
             neighbor_role = df.iloc[indices[i][j]]['Relationship Role']
-            if df.iloc[i]['Relationship Role'] == 'mentor' and neighbor_role == 'mentee':
+            current_role = df.iloc[i]['Relationship Role']
+            
+            #st.write(f"User {df.iloc[i]['Id']} ({current_role}) - Potential neighbor {df.iloc[indices[i][j]]['Id']} ({neighbor_role})")
+            
+            # Skip self-matches (when j == 0)
+            if j == 0:
+                continue
+                
+            if current_role == 'mentor' and neighbor_role == 'mentee':
                 nearest_neighbors.append((df.iloc[indices[i][j]]['Id'], round(1 - distances[i][j], 2), neighbor_role))
-            elif df.iloc[i]['Relationship Role'] == 'mentee' and neighbor_role == 'mentor':
+            elif current_role == 'mentee' and neighbor_role == 'mentor':
                 nearest_neighbors.append((df.iloc[indices[i][j]]['Id'], round(1 - distances[i][j], 2), neighbor_role))
 
+        #st.write(f"Found {len(nearest_neighbors)} matches for user {df.iloc[i]['Id']}")
+        
         result = {
             'Id': df.iloc[i]['Id'],
-            'Relationship Role': df.iloc[i]['Relationship Role'],
-            'Nearest Neighbors': nearest_neighbors[:k-1]
+            'Relationship Role': current_role,
+            'Nearest Neighbors': nearest_neighbors
         }
         results.append(result)
 
-    results_df = pd.DataFrame(results)
-    pd.set_option('display.max_colwidth', None)
-    #change Neighbors to string for serialization
-    results_df['Nearest Neighbors'] = results_df['Nearest Neighbors'].apply(lambda x: str(x) if isinstance(x, list) else x)
+    # results_df = pd.DataFrame(results)
+    # pd.set_option('display.max_colwidth', None)
+    # #change Neighbors to string for serialization
+    # results_df['Nearest Neighbors'] = results_df['Nearest Neighbors'].apply(lambda x: str(x) if isinstance(x, list) else x)
 
-    st.write("Matching Results:")
-    st.dataframe(results_df)
+    # st.write("Matching Results:")
+    # st.dataframe(results_df)
 
-    csv = results_df.to_csv(index=False)
-    st.download_button(
-        label="Download Matching Results as CSV",
-        data=csv,
-        file_name='mentor_mentee_matching_results.csv',
-        mime='text/csv',
-    )
+    # csv = results_df.to_csv(index=False)
+    # st.download_button(
+    #     label="Download Matching Results as CSV",
+    #     data=csv,
+    #     file_name='mentor_mentee_matching_results.csv',
+    #     mime='text/csv',
+    # )
+
+grouped_neighbors = {}
+
+for i, profile in enumerate(df['Profile']):
+    current_user_id = df.iloc[i]['Id']
+    current_role = df.iloc[i]['Relationship Role']
+
+    #collect neighbors
+    neighbors = []
+    for j in range(k):
+        neighbor_id = df.iloc[indices[i][j]]['Id']
+        neighbor_role = df.iloc[indices[i][j]]['Relationship Role']
+        similarity = round(1 - distances[i][j], 2)
+
+        # Skip self-matches (when j == 0)
+        if j == 0:
+            continue
+
+        neighbors.append(f"({neighbor_id}, {neighbor_role}, {similarity})")
+
+    grouped_neighbors[current_user_id] = {
+        "ID": current_user_id,
+        "Relationship Role": current_role,
+        "Neighbors": ", ".join(neighbors) 
+    }
+
+neighbor_summary_df = pd.DataFrame(grouped_neighbors.values())
+
+st.write("Neighbor Matching Results (Grouped):")
+st.dataframe(neighbor_summary_df)
+
+summary_csv = neighbor_summary_df.to_csv(index=False)
+st.download_button(
+    label="Download Grouped Neighbor Matching Results as CSV",
+    data=summary_csv,
+    file_name='grouped_neighbor_matching_results.csv',
+    mime='text/csv',
+)
+
+#----------------------------------------
+
+grouped_neighbors = {}
+
+for i, profile in enumerate(df['Profile']):
+    current_user_id = df.iloc[i]['Id']
+    current_role = df.iloc[i]['Relationship Role']
+
+    #collect neighbors
+    neighbors = []
+    for j in range(k):
+        neighbor_id = df.iloc[indices[i][j]]['Id']
+        neighbor_role = df.iloc[indices[i][j]]['Relationship Role']
+        similarity = round(1 - distances[i][j], 2)
+
+        # Skip self-matches (when j == 0)
+        if j == 0:
+            continue
+
+        if (current_role.lower() == 'mentor' and neighbor_role.lower() == 'mentee') or \
+           (current_role.lower() == 'mentee' and neighbor_role.lower() == 'mentor'):
+            neighbors.append(f"({neighbor_id}, {neighbor_role}, {similarity})")
+
+    grouped_neighbors[current_user_id] = {
+        "ID": current_user_id,
+        "Relationship Role": current_role,
+        "Neighbors": ", ".join(neighbors) 
+    }
+
+neighbor_summary_df = pd.DataFrame(grouped_neighbors.values())
+
+st.write("Neighbor Matching Results (Grouped):")
+st.dataframe(neighbor_summary_df)
+
+# summary_csv = neighbor_summary_df.to_csv(index=False)
+# st.download_button(
+#     label="Download Grouped Neighbor Matching Results as CSV",
+#     data=summary_csv,
+#     file_name='grouped_neighbor_matching_results.csv',
+#     mime='text/csv',
+# )
+
+
+
