@@ -69,6 +69,14 @@ st.write("""Upload a CSV file with a user profile in each row""")
 uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 
 if uploaded_file is not None:
+    df = pd.read_csv(uploaded_file)
+    st.session_state['uploaded_file'] = df
+else:
+    df = st.session_state['uploaded_file']
+
+if df is not None:
+    st.write("Uploaded CSV file:")
+    st.write(df.head())
 
     raw_data = uploaded_file.read()
     result = chardet.detect(raw_data)
@@ -76,7 +84,6 @@ if uploaded_file is not None:
     uploaded_file.seek(0)
     df = pd.read_csv(uploaded_file, encoding=encoding)
     df = df.astype(str)
-    df = df.head(500)
   #  df = df.sample(frac=0.1, random_state=42)
 
     model = BertModel.from_pretrained('bert-base-uncased')
@@ -160,4 +167,11 @@ if uploaded_file is not None:
         mime='text/csv',
     )
 
-    st.write("Role distribution:", df['Relationship Role'].value_counts())
+ #table of role breakdown
+df['Relationship Role'] = df['Relationship Role'].replace({'mentor': 'Mentor', 'mentee': 'Mentee'})
+
+role_counts = df['Relationship Role'].value_counts().reset_index()
+role_counts.columns = ['Relationship Role', 'Count']
+
+st.write("Breakdown of Relationship Roles:")
+st.dataframe(role_counts)
