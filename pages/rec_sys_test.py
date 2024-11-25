@@ -212,14 +212,12 @@ for i, profile in enumerate(df['Profile']):
     current_user_id = df.iloc[i]['Id']
     current_role = df.iloc[i]['Relationship Role']
 
-    #collect neighbors
     neighbors = []
     for j in range(k):
         neighbor_id = df.iloc[indices[i][j]]['Id']
         neighbor_role = df.iloc[indices[i][j]]['Relationship Role']
         similarity = round(1 - distances[i][j], 2)
 
-        # Skip self-matches (when j == 0)
         if j == 0:
             continue
 

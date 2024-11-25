@@ -159,3 +159,5 @@ if uploaded_file is not None:
         file_name='mentor_mentee_matching_results.csv',
         mime='text/csv',
     )
+
+    st.write("Role distribution:", df['Relationship Role'].value_counts())
