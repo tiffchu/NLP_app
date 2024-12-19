@@ -13,6 +13,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import StandardScaler
 import chardet
 import io
+
 nltk.download('stopwords')
 
 warnings.filterwarnings("ignore", message="A parameter name that contains `beta` will be renamed internally to `bias`")
@@ -237,16 +238,16 @@ for i, profile in enumerate(df['Profile']):
 
 neighbor_summary_df = pd.DataFrame(grouped_neighbors.values())
 
-st.write("Neighbor Matching Results (Grouped):")
+st.write("Neighbor Matching Results (all matches):")
 st.dataframe(neighbor_summary_df)
 
-# summary_csv = neighbor_summary_df.to_csv(index=False)
-# st.download_button(
-#     label="Download Grouped Neighbor Matching Results as CSV",
-#     data=summary_csv,
-#     file_name='grouped_neighbor_matching_results.csv',
-#     mime='text/csv',
-# )
+summary_csv = neighbor_summary_df.to_csv(index=False)
+st.download_button(
+    label="Download Grouped Neighbor Matching (all matches) Results as CSV",
+    data=summary_csv,
+    file_name='grouped_neighbor_matching_results.csv',
+    mime='text/csv',
+)
 
 #----------------------------------------
 
@@ -276,16 +277,16 @@ for i, profile in enumerate(df['Profile']):
         "Neighbors": ", ".join(neighbors) 
     }
 
-neighbor_summary_df = pd.DataFrame(grouped_neighbors.values())
+neighbor_summary_df2 = pd.DataFrame(grouped_neighbors.values())
 
-st.write("Neighbor Matching Results (Grouped):")
-st.dataframe(neighbor_summary_df)
+st.write("Neighbor Matching Results (mentees to mentors only):")
+st.dataframe(neighbor_summary_df2)
 
-summary_csv = neighbor_summary_df.to_csv(index=False)
+summary_csv = neighbor_summary_df2.to_csv(index=False)
 st.download_button(
-    label="Download Grouped Neighbor Matching Results as CSV",
+    label="Download Grouped Neighbor Matching (mentees to mentors only) Results as CSV",
     data=summary_csv,
-    file_name='grouped_neighbor_matching_results.csv',
+    file_name='neighbor_matching_results.csv',
     mime='text/csv',
 )
 

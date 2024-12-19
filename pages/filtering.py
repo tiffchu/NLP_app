@@ -61,8 +61,9 @@ if uploaded_file is not None:
     
     result_df = calculate_relationship_duration_and_responses(df)
     df = pd.merge(df, result_df, on=['Mentor ID', 'Mentee ID', 'Relationship ID'], how='left')
-    df = df.drop(columns=['Response_x','Mentor Created at_x','Mentor Created at_y','Mentor_x', 'Category_x','Response Datetime_x'])
-    
+    columns_to_drop = ['Response_x', 'Mentor Created at_x', 'Mentor Created at_y', 'Mentor_x', 'Category_x', 'Response Datetime_x']
+    df = df.drop(columns=[col for col in columns_to_drop if col in df.columns])
+
     st.write("Adding Relationship Duration and Number of Responses in the relationship so far:")
     st.write(df)
 
