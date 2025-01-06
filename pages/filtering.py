@@ -14,14 +14,14 @@ def count_words(text):
 def calculate_relationship_duration_and_responses(df):
     df['Response Datetime'] = pd.to_datetime(df['Response Datetime'])
     
-    # Cumulative count of responses
+    # cum count of responses
     df = df.sort_values(by=['Mentor ID', 'Mentee ID', 'Relationship ID', 'Response Datetime'])
     df['Current Number of Responses'] = df.groupby(['Mentor ID', 'Mentee ID', 'Relationship ID']).cumcount() + 1
     
-    # Calculate word count for each response
+    # count words
     df['Word Count'] = df['Response'].apply(count_words)
     
-    # Calculate cumulative word count for each relationship
+    #  cumulative word count for each relationship
     df['Cumulative Word Count'] = df.groupby(['Mentor ID', 'Mentee ID', 'Relationship ID'])['Word Count'].cumsum()
     
     grouped_df = df.groupby(['Mentor ID', 'Mentee ID', "Relationship ID"]).agg(
