@@ -43,7 +43,7 @@ def select_text_column(*, column):
 def update_search_word(*, word):
     st.session_state.search_word = word
 
-# Function to preprocess text
+# preprocess text
 def preprocess_text(text):
     if isinstance(text, str):  # Check if the input is a string
         stop_words = set(stopwords.words('english'))
@@ -54,34 +54,25 @@ def preprocess_text(text):
     else:
         return []  # Return an empty list if the input is not a string
 
-# Function to create word cloud
-# def create_wordcloud(text, title):
-#     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(text))
-#     plt.figure(figsize=(10, 5))
-#     plt.imshow(wordcloud, interpolation='bilinear')
-#     plt.axis('off')
-#     plt.title(title)
-#     st.pyplot(plt)
-
 @st.cache_data
 def get_BERTopic_model():
-    # Step 1 - Extract embeddings
+    # 1 - Extract embeddings
     embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
-    # Step 2 - Reduce dimensionality
+    # 2 - Reduce dimensionality
     umap_model = UMAP(n_neighbors=15, n_components=5, min_dist=0.0, metric='cosine', random_state=69)
 
 
-    # Step 3 - Cluster reduced embeddings
+    # 3 - Cluster reduced embeddings
     hdbscan_model = HDBSCAN(min_cluster_size=15, metric='euclidean', cluster_selection_method='eom', prediction_data=True)
 
-    # Step 4 - Tokenize topics
+    # 4 - Tokenize topics
     vectorizer_model = CountVectorizer(stop_words="english")
 
-    # Step 5 - Create topic representation
+    # 5 - Create topic representation
     ctfidf_model = ClassTfidfTransformer(reduce_frequent_words=True)
 
-    # Step 6 - (Optional) Fine-tune topic representations with 
+    #  6 - (Optional) Fine-tune topic representations with 
     # a `bertopic.representation` model
     representation_model = KeyBERTInspired()
 

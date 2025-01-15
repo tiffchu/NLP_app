@@ -17,7 +17,7 @@ nltk.download('punkt')
 nltk.download('stopwords')
 nltk.download('wordnet')
 
-# Function to preprocess text
+# preprocess text
 def preprocess_text(text):
     if isinstance(text, str):
         stop_words = set(stopwords.words('english'))
@@ -28,7 +28,7 @@ def preprocess_text(text):
     else:
         return []
 
-# Function to create word cloud
+#create word cloud
 def create_wordcloud(text, title):
     wordcloud = WordCloud(width=800, height=400, background_color='white').generate(" ".join(text))
     plt.figure(figsize=(10, 5))
@@ -37,7 +37,7 @@ def create_wordcloud(text, title):
     plt.title(title)
     st.pyplot(plt)
 
-# Function to visualize topics using Plotly
+#  visualize topics using Plotly
 def visualize_topics_plotly(lda_model):
     topics = lda_model.show_topics(formatted=False, num_words=10)
     topic_words = []
