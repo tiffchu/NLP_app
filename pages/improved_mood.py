@@ -49,6 +49,7 @@ if df is not None:
     selection = st.multiselect('Select a range of emotions to predict (pick 3 emotions)', options=mood_categories)
 
     if "Add emotion" in selection:
+        selection.remove("Add emotion")
         custom_emotion = st.text_input("Enter your custom emotion")
         if custom_emotion:
             selection.append(custom_emotion)
