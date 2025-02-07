@@ -9,7 +9,7 @@ st.set_page_config(
     page_title="Emotion Detection App",
     page_icon="😊",
     initial_sidebar_state='auto',
-)
+) 
 
 st.title("Emotion Detection with BART")
 st.write("""

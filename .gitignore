@@ -2,3 +2,6 @@ NLP_app
 pages/codellamatest.py
 pages/summarization2.py
 pages/mood.py
+pages/mooddetection.py
+pages/improvedmood.py
+pages/recommendersys.py
