@@ -12,5 +12,5 @@ This tool can be used by users in non-tech domains to experiment with natural la
 
 <p align="center"><img src="https://github.com/tiffchu/NLP_app.svg?label=Views&color=fc8e00&labelColor=000" alt="view-count" /></p> -->
 
-![NLP Tool Demo](images/img2.gif)
-![NLP Tool Demo](images/img1.gif)
+![NLP Tool Demo](images/img2.png)
+![NLP Tool Demo](images/img1.png)
