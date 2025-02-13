@@ -16,3 +16,5 @@ This tool can be used by users in non-tech domains to experiment with natural la
 
 Mood detection demo:
 ![NLP Tool Demo](images/img1.png)
+
+![NLP Tool Demo](images/img3.png)

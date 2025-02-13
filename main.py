@@ -1,13 +1,23 @@
 import streamlit as st
 import pandas as pd
 
+def toggle_dark_mode():
+    current_theme = 'light' if st.session_state.get('theme', 'light') == 'dark' else 'dark'
+    st.session_state.theme = current_theme
+    st.query_params.theme = current_theme
+
 st.set_page_config(
     page_title="Natural Language Processing App",
     page_icon="🤖",
     initial_sidebar_state='auto',
-    
+    menu_items={
+        'Get Help': None,
+        'Report a bug': None,
+        'About': None
+    }
 )
 
+st.sidebar.button('Toggle Light/Dark Mode', on_click=toggle_dark_mode)
 #st.title("This is the Home Page.")
 st.title("Welcome to the Natural Language Processing App!")
 st.write("Use the sidebar to navigate to different sections of the app.")
