@@ -15,6 +15,7 @@ This tool can be used by users in non-tech domains to experiment with natural la
 ![NLP Tool Demo](images/img2.png)
 
 Mood detection demo:
-![NLP Tool Demo](images/img1.png)
+![NLP Tool Demo2](images/img1.png)
 
-![NLP Tool Demo](images/img3.png)
+Topic Modelling demo:
+![NLP Tool Demo3](images/img3.png)
